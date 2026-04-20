@@ -18,10 +18,10 @@
 
 ---
 
-## 🌌 Overview
+## Overview
 Friday is a high-performance AI voice agent built to live on Tanish's portfolio. She doesn't just talk; she controls the UI, handles networking, and represents Tanish in real-time using a first-principles architecture.
 
-## 🏗 Architecture
+## Architecture
 ```mermaid
 graph TD
     User((Visitor)) <-->|Voice/Data| Portfolio[tanish.website]
@@ -37,7 +37,7 @@ graph TD
     end
 ```
 
-## ⚡ Quick Start
+## Quick Start
 
 ### 1. Install Dependencies
 ```bash
@@ -69,7 +69,7 @@ GITHUB_USERNAME=tanishra
 python main.py
 ```
 
-## 🎮 Remote Control Integration
+## Remote Control Integration
 Friday can "drive" your portfolio. Listen for data packets on your frontend:
 
 ```javascript
