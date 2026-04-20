@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     # ── STT / LLM / TTS ──────────────────────────────────────────────────────
     deepgram_api_key: str
     openai_api_key: str
-    elevenlabs_api_key: str
-    elevenlabs_voice_id: str
+    elevenlabs_api_key: str = ""
+    elevenlabs_voice_id: str = ""
 
     # ── Email ─────────────────────────────────────────────────────────────────
     resend_api_key: str
