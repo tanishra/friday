@@ -1,0 +1,19 @@
+services:
+  friday:
+    build: .
+    container_name: friday-agent
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./friday/knowledge/resume.pdf:/app/friday/knowledge/resume.pdf
+      # If you use Google Calendar, uncomment the lines below after generating token.json
+      # - ./credentials.json:/app/credentials.json
+      # - ./token.json:/app/token.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
