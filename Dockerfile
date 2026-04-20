@@ -5,10 +5,9 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install system dependencies
-# git is often needed for some python packages, curl for health checks
-RUN apt-get update && apt-get install -y --no-install-recommends 
-    git 
-    curl 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install dependencies
@@ -25,5 +24,4 @@ COPY . .
 EXPOSE 8080
 
 # Command to run both the API server and the LiveKit worker
-# This uses your main.py which we configured to run both concurrently
 CMD ["python", "main.py"]

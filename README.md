@@ -39,13 +39,19 @@ graph TD
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Clone the repository
+```bash
+git clone https://github.com/tanishra/friday.git
+cd friday
+```
+
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
 python -c "from livekit.plugins import silero; silero.VAD.load()"
 ```
 
-### 2. Configure Environment
+### 3. Configure Environment
 Create a `.env` file in the root directory:
 ```env
 # LiveKit Cloud
@@ -64,7 +70,7 @@ YOUR_EMAIL=tanish@youremail.com
 GITHUB_USERNAME=tanishra
 ```
 
-### 3. Run Locally
+### 4. Run Locally
 ```bash
 python main.py
 ```
