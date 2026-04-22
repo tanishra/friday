@@ -19,7 +19,7 @@
 ---
 
 ## Overview
-Friday is a high-performance AI voice agent built to live on Tanish's portfolio. She doesn't just talk; she controls the UI, handles networking, and represents Tanish in real-time using a first-principles architecture.
+Friday is an AI voice agent built to live on Tanish's portfolio. She doesn't just talk; she controls the UI, handles networking, and represents Tanish in real-time using a first-principles architecture.
 
 ## Architecture
 ```mermaid
