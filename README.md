@@ -68,6 +68,10 @@ RESEND_API_KEY=your_resend_api_key
 SENDER_EMAIL=friday@yourdomain.com
 YOUR_EMAIL=tanish@youremail.com
 GITHUB_USERNAME=tanishra
+
+# API Security
+FRIDAY_API_KEY=generate-with-openssl-rand-hex-32
+TOKEN_RATE_LIMIT=10/hour
 ```
 
 ### 4. Run Locally
@@ -75,7 +79,27 @@ GITHUB_USERNAME=tanishra
 python main.py
 ```
 
-## Remote Control Integration
+## Frontend Integration
+
+### 1. Fetch a token (requires the shared secret)
+
+```typescript
+const res = await fetch(`${API_URL}/token`, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Friday-Key": process.env.NEXT_PUBLIC_FRIDAY_API_KEY!,
+  },
+  body: JSON.stringify({}),
+});
+const { token, livekit_url, room_name } = await res.json();
+```
+
+Set `NEXT_PUBLIC_FRIDAY_API_KEY` to the same value as the backend's `FRIDAY_API_KEY`.
+
+Requests without the key get `403`. Each client IP is limited to 10 tokens/hour (`429` beyond that).
+
+### 2. Remote Control
 Friday can "drive" your portfolio. Listen for data packets on your frontend:
 
 ```javascript
