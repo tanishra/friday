@@ -8,15 +8,19 @@ The portfolio's Next.js app calls:
 This is what makes Friday "pluggable" into any frontend.
 Run: uvicorn api.server:app --port 8080 --reload
 """
+import hmac
 import logging
 import secrets
+import time
 from datetime import datetime, timezone, timedelta
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from livekit.api import AccessToken, VideoGrants
-import time
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from friday.config import get_settings
 
@@ -28,6 +32,18 @@ app = FastAPI(
     description="Issues LiveKit room tokens for Friday — Tanish's AI voice agent.",
     version="1.0.0",
 )
+
+# ── Rate limiter — per client IP ─────────────────────────────────────────────
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+async def verify_friday_key(x_friday_key: str | None = Header(default=None)):
+    """Reject /token requests missing the shared secret. Constant-time compare."""
+    if x_friday_key is None or not hmac.compare_digest(x_friday_key, settings.friday_api_key):
+        raise HTTPException(status_code=403, detail="Invalid or missing API key")
+
 
 # ── CORS — allow portfolio origin ────────────────────────────────────────────
 app.add_middleware(
@@ -63,8 +79,9 @@ async def health():
     return {"status": "ok", "agent": "friday", "version": "1.0.0"}
 
 
-@app.post("/token", response_model=TokenResponse)
-async def get_token(req: TokenRequest):
+@app.post("/token", response_model=TokenResponse, dependencies=[Depends(verify_friday_key)])
+@limiter.limit(lambda: settings.token_rate_limit)
+async def get_token(req: TokenRequest, request: Request):
     try:
         # Generate unique identifiers
         room_name = req.room_name or f"friday-{secrets.token_hex(6)}"
@@ -120,7 +137,7 @@ async def get_token(req: TokenRequest):
         import traceback
         logger.error(f"Critical Token Error: {e}")
         logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail="Check server console for traceback")
+        raise HTTPException(status_code=500, detail="Token generation failed")
 
 
 @app.get("/")
