@@ -11,6 +11,7 @@ python-dotenv>=1.0.0
 # ── API server (token endpoint for portfolio integration) ─────────────────────
 fastapi>=0.115.0
 uvicorn[standard]>=0.30.0
+slowapi>=0.1.9
 
 # ── Email ─────────────────────────────────────────────────────────────────────
 resend>=0.8.0
