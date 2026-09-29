@@ -47,6 +47,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     api_port: int = 8080           # Token server port
 
+    # ── API Security ──────────────────────────────────────────────────────────
+    friday_api_key: str                    # shared secret required on /token
+    token_rate_limit: str = "10/hour"      # slowapi limit string
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
