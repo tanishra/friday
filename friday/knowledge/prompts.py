@@ -101,3 +101,13 @@ GREETING = (
     "Hey! I'm Friday — Tanish's personal AI assistant. "
     "What would you like to know about him?"
 )
+
+TIME_WARNING = (
+    "Quick heads up — we have about 30 seconds left. "
+    "Anything else quick you'd like to know?"
+)
+
+GOODBYE = (
+    "That's all the time we have today! It was lovely talking to you. "
+    "Feel free to reach out to Tanish directly — his details are on the contact section. Bye!"
+)
