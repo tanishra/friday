@@ -18,11 +18,12 @@ from livekit.agents import (
     JobContext,
     RoomInputOptions,
     function_tool,
+    room_io,
 )
 from livekit.plugins import deepgram, elevenlabs, openai, silero
 
 from friday.config import get_settings
-from friday.knowledge.prompts import build_system_prompt, GREETING
+from friday.knowledge.prompts import build_system_prompt, GREETING, TIME_WARNING, GOODBYE
 from friday.tools.email_tool import send_message_to_tanish, send_resume_to_user
 from friday.tools.github_tool import (
     get_github_summary,
@@ -189,6 +190,30 @@ class FridayAgent(Agent):
         )
 
 
+# ── Call duration enforcer ────────────────────────────────────────────────────
+async def _enforce_call_limit(session: AgentSession):
+    """
+    Enforces settings.max_call_duration_seconds.
+    Warns the visitor 30s before the limit, says an uninterruptible goodbye at
+    the limit, then closes the session (room deleted via delete_room_on_close).
+    Cancelled automatically if the call ends early.
+    """
+    try:
+        limit   = settings.max_call_duration_seconds
+        warn_at = max(0, limit - 30)
+
+        await asyncio.sleep(warn_at)
+        await session.say(TIME_WARNING, allow_interruptions=True)
+
+        await asyncio.sleep(limit - warn_at)
+        await session.say(GOODBYE, allow_interruptions=False)
+        await session.aclose()
+    except asyncio.CancelledError:
+        raise
+    except Exception as e:
+        logger.warning(f"call-limit enforcer failed: {e}")
+
+
 # ── Entry point for LiveKit worker ────────────────────────────────────────────
 async def entrypoint(ctx: JobContext):
     """LiveKit calls this function when a new room job is dispatched."""
@@ -225,8 +250,16 @@ async def entrypoint(ctx: JobContext):
     )
 
     # Pass ctx.room to FridayAgent so tools can publish data correctly
-    await session.start(agent=FridayAgent(user_id=user_id, room=ctx.room), room=ctx.room)
+    await session.start(
+        agent=FridayAgent(user_id=user_id, room=ctx.room),
+        room=ctx.room,
+        room_options=room_io.RoomOptions(delete_room_on_close=True),
+    )
     logger.info(f"Friday active for user: {user_id}")
+
+    # Hard cap on call duration — cancelled if the job ends early
+    timer = asyncio.create_task(_enforce_call_limit(session))
+    ctx.add_shutdown_callback(timer.cancel)
 
 
 
