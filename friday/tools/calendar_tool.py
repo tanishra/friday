@@ -20,6 +20,8 @@ from pathlib import Path
 import pytz
 from dateutil import parser as date_parser
 
+from friday.config import get_settings
+
 CREDS_FILE  = Path(__file__).parent.parent.parent / "credentials.json"
 TOKEN_FILE  = Path(__file__).parent.parent.parent / "token.json"
 SCOPES      = ["https://www.googleapis.com/auth/calendar"]
@@ -154,13 +156,11 @@ async def create_meeting(
 
     # ── Fallback: send email to Tanish requesting the meeting ─────────────────
     try:
-        import resend
-        from friday.config import get_settings
+        from friday.tools.email_tool import _send_email
         cfg = get_settings()
-        resend.api_key = cfg.resend_api_key
 
         event_time = start_dt.strftime("%A, %d %B %Y at %I:%M %p IST")
-        resend.Emails.send({
+        await asyncio.to_thread(_send_email, {
             "from":    cfg.sender_email,
             "to":      [cfg.your_email],
             "subject": f"Meeting Request from {requester_name} — {topic}",
