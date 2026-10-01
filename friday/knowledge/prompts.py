@@ -107,6 +107,10 @@ TIME_WARNING = (
     "Anything else quick you'd like to know?"
 )
 
+STILL_THERE = (
+    "Hello? Are you still there? I'll wrap up if there's nothing else."
+)
+
 GOODBYE = (
     "That's all the time we have today! It was lovely talking to you. "
     "Feel free to reach out to Tanish directly — his details are on the contact section. Bye!"
