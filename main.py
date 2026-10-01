@@ -46,10 +46,10 @@ def run_worker_sync():
     from friday.config import get_settings
     import sys
 
-    # If no specific LiveKit command (dev, start, etc.) is provided, default to 'dev'
-    # This allows 'python main.py' to work without extra arguments.
-    if len(sys.argv) <= 1 or sys.argv[1] not in ["dev", "start", "connect", "download-files"]:
-        sys.argv.insert(1, "dev")
+    # Default to 'dev' unless user passed a real LiveKit subcommand.
+    # Rebuild argv so our own flags (--worker/--api) never reach LiveKit's CLI parser.
+    if len(sys.argv) <= 1 or sys.argv[1] not in ["dev", "start", "connect", "download-files", "console"]:
+        sys.argv[1:] = ["dev"]
 
     cfg = get_settings()
     cli.run_app(
