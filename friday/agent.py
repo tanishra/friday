@@ -16,11 +16,10 @@ from livekit.agents import (
     Agent,
     AgentSession,
     JobContext,
-    RoomInputOptions,
     function_tool,
     room_io,
 )
-from livekit.plugins import deepgram, elevenlabs, openai, silero
+from livekit.plugins import deepgram, openai, silero
 
 from friday.config import get_settings
 from friday.knowledge.prompts import build_system_prompt, GREETING, TIME_WARNING, GOODBYE
@@ -44,7 +43,6 @@ class FridayAgent(Agent):
     def __init__(self, user_id: str, room: rtc.Room):
         self._user_id  = user_id
         self._room     = room
-        self._history: list[dict] = []
 
         super().__init__(
             instructions=build_system_prompt(),
@@ -186,7 +184,7 @@ class FridayAgent(Agent):
             "Tanish Rajput — AI Engineer Current at QualtechEdge. "
             "Built production voice agents and RAG pipelines. "
             "Skills: Python, LLMs, LangChain, LangGraph, AI Agents, LiveKit. "
-            "He builds from scratch without high-level frameworks."
+            "He designs agent systems from first principles."
         )
 
 
@@ -222,12 +220,12 @@ async def entrypoint(ctx: JobContext):
 
     user_id = "anonymous"
     try:
-        participants = ctx.room.remote_participants
-        if participants:
-            first = next(iter(participants.values()))
-            user_id = first.identity or "anonymous"
-    except Exception:
-        pass
+        participant = await asyncio.wait_for(ctx.wait_for_participant(), timeout=10)
+        user_id = participant.identity or "anonymous"
+    except asyncio.TimeoutError:
+        logger.warning("no participant joined within 10s — continuing as anonymous")
+    except Exception as e:
+        logger.warning(f"participant lookup failed: {e}")
 
     session = AgentSession(
         stt=deepgram.STT(
