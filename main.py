@@ -58,6 +58,7 @@ def run_worker_sync():
             api_key=cfg.livekit_api_key,
             api_secret=cfg.livekit_api_secret,
             ws_url=cfg.livekit_url,
+            port=8081,   # built-in worker health server: GET / and GET /worker
         )
     )
 
