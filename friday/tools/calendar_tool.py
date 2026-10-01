@@ -12,6 +12,7 @@ Setup needed (one-time):
 After that, runs headlessly.
 """
 import asyncio
+import logging
 import os
 import json
 from datetime import datetime, timedelta
@@ -27,6 +28,7 @@ TOKEN_FILE  = Path(__file__).parent.parent.parent / "token.json"
 SCOPES      = ["https://www.googleapis.com/auth/calendar"]
 IST         = pytz.timezone("Asia/Kolkata")
 OWNER_EMAIL = "tanishrajput9@gmail.com"
+logger      = logging.getLogger("friday.tools.calendar")
 
 
 def _get_google_service():
@@ -49,10 +51,12 @@ def _get_google_service():
                 creds = flow.run_local_server(port=0)
                 TOKEN_FILE.write_text(creds.to_json())
             else:
+                logger.info("Google Calendar not configured (no credentials.json) — will use email fallback")
                 return None  # No credentials file yet
 
         return build("calendar", "v3", credentials=creds)
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Google Calendar auth failed: {e}")
         return None
 
 
@@ -152,7 +156,7 @@ async def create_meeting(
 
         except Exception as e:
             # Fall through to email fallback
-            pass
+            logger.warning(f"Google Calendar event creation failed, falling back to email: {e}")
 
     # ── Fallback: send email to Tanish requesting the meeting ─────────────────
     try:
