@@ -76,7 +76,7 @@ SKILLS = {
     "ai_ml": [
         "LLMs (OpenAI, Claude, Gemini, Groq, Mistral, DeepSeek, Sarvam, Moonshot, LLaMA)",
         "LangChain / LangGraph",
-        "CrewAI"
+        "CrewAI",
         "RAG Pipelines",
         "Prompt Engineering",
         "Context Engineering",
@@ -126,14 +126,15 @@ PROJECTS = [
     {
         "name":        "Friday",
         "tagline":     "Real-time AI Voice Agent",
-        "status":      "In Progress",
+        "status":      "Live",
         "description": (
-            "The very agent you're talking to right now. An AI voice assistant built entirely from scratch "
-            "on LiveKit, using Deepgram for speech-to-text, OpenAI GPT-4o for reasoning, "
-            "and ElevenLabs for natural speech synthesis. "
-            "Friday can answer questions about Tanish, send emails, check GitHub, schedule meetings, and more."
+            "The very agent you're talking to right now. An AI voice assistant built on the "
+            "LiveKit Agents framework, using Deepgram for speech-to-text and speech synthesis "
+            "(Nova-2 STT, Aura Stella voice), and OpenAI GPT-4o-mini for reasoning. "
+            "Friday can answer questions about Tanish, send emails, check GitHub, schedule meetings, "
+            "and even drive this website's UI."
         ),
-        "tech":        ["LiveKit", "Python", "Deepgram", "OpenAI", "ElevenLabs", "FastAPI", "Redis"],
+        "tech":        ["LiveKit Agents", "Python", "Deepgram", "OpenAI", "FastAPI"],
         "github":      "https://github.com/tanishra/friday",
         "category":    "Voice Agent",
     },
