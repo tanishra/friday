@@ -7,11 +7,13 @@ so the agent event loop never stalls audio/VAD/TTS.
 """
 import asyncio
 import base64
+import logging
 
 from github import Github
 from friday.config import get_settings
 
 settings = get_settings()
+logger   = logging.getLogger("friday.tools.github")
 
 def _get_client():
     """Return an authenticated GitHub client."""
@@ -50,7 +52,8 @@ def _get_repo_details_sync(repo_name: str) -> str:
             # Take the first 300 characters for a voice-friendly summary
             summary = content[:300].replace('\n', ' ').strip()
             details.append(f"README Summary: {summary}...")
-        except Exception:
+        except Exception as e:
+            logger.debug(f"README fetch failed for {repo_name}: {e}")
             details.append("README: Not available or empty.")
 
         return "\n".join(details)
@@ -90,7 +93,8 @@ def _get_github_summary_sync() -> str:
             f"His most recently updated projects are: {', '.join(repo_names)}. "
             f"I can provide more details on any of these if you'd like."
         )
-    except Exception:
+    except Exception as e:
+        logger.warning(f"GitHub summary failed: {e}")
         return f"I'm having trouble connecting to GitHub right now, but you can check out his work at github.com/{settings.github_username}."
 
 
