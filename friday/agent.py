@@ -22,7 +22,7 @@ from livekit.agents import (
 from livekit.plugins import deepgram, openai, silero
 
 from friday.config import get_settings
-from friday.knowledge.prompts import build_system_prompt, GREETING, TIME_WARNING, GOODBYE
+from friday.knowledge.prompts import build_system_prompt, GREETING, TIME_WARNING, GOODBYE, STILL_THERE
 from friday.tools.email_tool import send_message_to_tanish, send_resume_to_user
 from friday.tools.github_tool import (
     get_github_summary as fetch_github_summary,
@@ -249,6 +249,13 @@ async def entrypoint(ctx: JobContext):
             model="aura-stella-en",  # kind and professional female voice
         ),
         vad=silero.VAD.load(),             # local VAD — free & fast
+        # ── Turn detection tuning ──
+        min_endpointing_delay=0.8,         # wait out mid-thought pauses
+        max_endpointing_delay=6.0,
+        min_interruption_duration=0.5,     # ignore coughs/clicks
+        false_interruption_timeout=1.5,    # resume after false interruptions
+        preemptive_generation=True,        # draft reply on interim transcript — faster
+        user_away_timeout=60.0,            # mark visitor 'away' after 60s silence
     )
 
     # Pass ctx.room to FridayAgent so tools can publish data correctly
@@ -262,6 +269,37 @@ async def entrypoint(ctx: JobContext):
     # Hard cap on call duration — cancelled if the job ends early
     timer = asyncio.create_task(_enforce_call_limit(session))
     ctx.add_shutdown_callback(timer.cancel)
+
+    # Visitor walked away → nudge once, then end the call (stops billing)
+    away_task: asyncio.Task | None = None
+
+    async def _away_countdown():
+        try:
+            await session.say(STILL_THERE, allow_interruptions=True)
+            await asyncio.sleep(30)
+            await session.say(GOODBYE, allow_interruptions=False)
+            await session.aclose()
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            logger.warning(f"away countdown failed: {e}")
+
+    @session.on("user_state_changed")
+    def _on_user_state(ev):
+        nonlocal away_task
+        if ev.new_state == "away":
+            if away_task is None or away_task.done():
+                away_task = asyncio.create_task(_away_countdown())
+        else:
+            if away_task is not None and not away_task.done():
+                away_task.cancel()
+                away_task = None
+
+    async def _cancel_away():
+        nonlocal away_task
+        if away_task is not None and not away_task.done():
+            away_task.cancel()
+    ctx.add_shutdown_callback(_cancel_away)
 
 
 
