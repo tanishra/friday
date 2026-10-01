@@ -25,10 +25,10 @@ from friday.config import get_settings
 from friday.knowledge.prompts import build_system_prompt, GREETING, TIME_WARNING, GOODBYE
 from friday.tools.email_tool import send_message_to_tanish, send_resume_to_user
 from friday.tools.github_tool import (
-    get_github_summary,
-    get_all_repositories,
-    get_repo_details,
-    get_recent_activity
+    get_github_summary as fetch_github_summary,
+    get_all_repositories as fetch_all_repositories,
+    get_repo_details as fetch_repo_details,
+    get_recent_activity as fetch_recent_activity,
 )
 from friday.tools.calendar_tool import create_meeting
 
@@ -54,7 +54,7 @@ class FridayAgent(Agent):
 
     # ── Tool methods with Verbal Fillers ───────────────────────────────────────
     @function_tool()
-    async def tool_get_current_time(self) -> str:
+    async def get_current_time(self) -> str:
         """
         Return the current date and time in India (IST).
         Use this when the user asks what time it is or what today's date is.
@@ -67,7 +67,7 @@ class FridayAgent(Agent):
         return f"It is currently {now.strftime('%A, %d %B %Y')}, at {now.strftime('%I:%M %p')} IST."
 
     @function_tool()
-    async def tool_navigate_ui(
+    async def navigate_ui(
         self,
         section: Annotated[str, "The section of the website to scroll to. Valid values: 'home', 'about', 'experience', 'projects', 'education', 'contact'"],
     ) -> str:
@@ -82,11 +82,15 @@ class FridayAgent(Agent):
             "section": section.lower()
         }).encode('utf-8')
         
-        await self._room.local_participant.publish_data(payload)
-        return f"UI navigated to {section} section."
+        try:
+            await self._room.local_participant.publish_data(payload)
+            return f"UI navigated to {section} section."
+        except Exception as e:
+            logger.warning(f"publish_data failed for section '{section}': {e}")
+            return f"I couldn't navigate the page right now, but look for the {section} section."
 
     @function_tool()
-    async def tool_send_email(
+    async def send_email(
         self,
         sender_name:  Annotated[str, "The name of the person sending the message"],
         sender_email: Annotated[str, "The email address of the sender (to reply to)"],
@@ -101,7 +105,7 @@ class FridayAgent(Agent):
         return result["message"]
 
     @function_tool()
-    async def tool_send_resume(
+    async def send_resume(
         self,
         receiver_name:  Annotated[str, "The name of the person requesting the resume"],
         receiver_email: Annotated[str, "The email address to send the resume to"],
@@ -114,38 +118,38 @@ class FridayAgent(Agent):
         return result["message"]
 
     @function_tool()
-    async def tool_github_summary(self) -> str:
+    async def github_summary(self) -> str:
         """Fetch and return a voice-friendly summary of Tanish's GitHub."""
         await self.session.say("Let me pull up Tanish's GitHub profile for you.", allow_interruptions=True)
-        return await get_github_summary()
+        return await fetch_github_summary()
 
     @function_tool()
-    async def tool_get_all_repositories(self) -> str:
+    async def list_repositories(self) -> str:
         """Fetch a list of all public repository names for Tanish."""
         await self.session.say("I'll fetch a list of all Tanish's repositories.", allow_interruptions=True)
-        repos = await get_all_repositories()
+        repos = await fetch_all_repositories()
         return f"Tanish has {len(repos)} repositories. Some are {', '.join(repos[:10])}."
 
     @function_tool()
-    async def tool_get_repo_details(
+    async def repo_details(
         self,
         repo_name: Annotated[str, "The name of the repository to get details for"]
     ) -> str:
         """Fetch detailed info about a specific repository."""
         await self.session.say(f"Let me look into the details for {repo_name}.", allow_interruptions=True)
-        return await get_repo_details(repo_name)
+        return await fetch_repo_details(repo_name)
 
     @function_tool()
-    async def tool_get_recent_github_activity(
+    async def recent_github_activity(
         self,
         repo_name: Annotated[str, "The name of the repository to check activity for"]
     ) -> str:
         """Check for recent open issues or pull requests in a specific repository."""
         await self.session.say(f"Checking for recent activity in {repo_name}.", allow_interruptions=True)
-        return await get_recent_activity(repo_name)
+        return await fetch_recent_activity(repo_name)
 
     @function_tool()
-    async def tool_schedule_meeting(
+    async def schedule_meeting(
         self,
         requester_name:    Annotated[str, "The name of the person who wants to meet Tanish"],
         requester_email:   Annotated[str, "Their email address for the calendar invite"],
@@ -167,7 +171,7 @@ class FridayAgent(Agent):
         return result["message"]
 
     @function_tool()
-    async def tool_get_contact_info(self) -> str:
+    async def get_contact_info(self) -> str:
         """Return Tanish's contact details and social links."""
         await self.session.say("I'll get his contact details for you.", allow_interruptions=True)
         return (
@@ -177,7 +181,7 @@ class FridayAgent(Agent):
         )
 
     @function_tool()
-    async def tool_get_resume_info(self) -> str:
+    async def get_resume_info(self) -> str:
         """Provide a spoken summary of Tanish's resume / CV."""
         await self.session.say("Let me grab a summary of Tanish's background.", allow_interruptions=True)
         return (
