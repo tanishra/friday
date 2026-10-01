@@ -10,7 +10,6 @@ Usage:
 import argparse
 import asyncio
 import logging
-import os
 import sys
 
 # ── Logging ───────────────────────────────────────────────────────────────────
@@ -38,34 +37,6 @@ async def run_api():
     )
     server = uvicorn.Server(config)
     await server.serve()
-
-
-async def run_worker():
-    """Start the LiveKit agent worker."""
-    from livekit.agents import WorkerOptions, cli
-    from friday.agent import entrypoint
-    from friday.config import get_settings
-
-    cfg = get_settings()
-    logger.info(f"🤖 Friday worker connecting to LiveKit: {cfg.livekit_url}")
-
-    # LiveKit's cli.run_app handles the worker event loop + dispatch
-    cli.run_app(
-        WorkerOptions(
-            entrypoint_fnc=entrypoint,
-            api_key=cfg.livekit_api_key,
-            api_secret=cfg.livekit_api_secret,
-            ws_url=cfg.livekit_url,
-        )
-    )
-
-
-async def run_both():
-    """Run API server and LiveKit worker concurrently."""
-    await asyncio.gather(
-        run_api(),
-        asyncio.to_thread(run_worker_sync),
-    )
 
 
 def run_worker_sync():
