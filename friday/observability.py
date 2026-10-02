@@ -12,7 +12,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-from livekit.agents.metrics import UsageCollector
+from livekit.agents.metrics import ModelUsageCollector
 
 logger = logging.getLogger("friday.observability")
 
@@ -29,7 +29,7 @@ class CallRecorder:
     def __init__(self, room_name: str, user_id: str):
         self._t0 = time.monotonic()
         self._finished = False
-        self._usage = UsageCollector()
+        self._usage = ModelUsageCollector()
         self._metric_vals: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
         self._rec = {
             "room":        room_name,
@@ -114,19 +114,14 @@ class CallRecorder:
             summary[mtype] = agg
         self._rec["metrics_summary"] = summary
 
-        # token/usage totals
+        # token/usage totals — per model+provider
         try:
-            u = self._usage.get_summary()
-            self._rec["usage"] = {
-                "llm_prompt_tokens":     u.llm_prompt_tokens,
-                "llm_completion_tokens": u.llm_completion_tokens,
-                "tts_characters":        u.tts_characters_count,
-                "stt_audio_s":           round(u.stt_audio_duration, 1),
-                "tts_audio_s":           round(u.tts_audio_duration, 1),
-            }
+            self._rec["usage"] = [
+                u.model_dump() for u in self._usage.flatten()
+            ]
         except Exception as e:
             logger.debug(f"usage summary failed: {e}")
-            self._rec["usage"] = {}
+            self._rec["usage"] = []
 
         try:
             LOG_DIR.mkdir(parents=True, exist_ok=True)

@@ -239,6 +239,20 @@ async def _enforce_call_limit(session: AgentSession):
         logger.warning(f"call-limit enforcer failed: {e}")
 
 
+# ── Away countdown ────────────────────────────────────────────────────────────
+async def _away_countdown(session: AgentSession, delay: float = 30.0):
+    """Nudge an idle visitor, then end the call if still silent."""
+    try:
+        await session.say(STILL_THERE, allow_interruptions=True)
+        await asyncio.sleep(delay)
+        await session.say(GOODBYE, allow_interruptions=False)
+        await session.aclose()
+    except asyncio.CancelledError:
+        raise
+    except Exception as e:
+        logger.warning(f"away countdown failed: {e}")
+
+
 # ── Entry point for LiveKit worker ────────────────────────────────────────────
 async def entrypoint(ctx: JobContext):
     """LiveKit calls this function when a new room job is dispatched."""
@@ -302,23 +316,12 @@ async def entrypoint(ctx: JobContext):
     # Visitor walked away → nudge once, then end the call (stops billing)
     away_task: asyncio.Task | None = None
 
-    async def _away_countdown():
-        try:
-            await session.say(STILL_THERE, allow_interruptions=True)
-            await asyncio.sleep(30)
-            await session.say(GOODBYE, allow_interruptions=False)
-            await session.aclose()
-        except asyncio.CancelledError:
-            raise
-        except Exception as e:
-            logger.warning(f"away countdown failed: {e}")
-
     @session.on("user_state_changed")
     def _on_user_state(ev):
         nonlocal away_task
         if ev.new_state == "away":
             if away_task is None or away_task.done():
-                away_task = asyncio.create_task(_away_countdown())
+                away_task = asyncio.create_task(_away_countdown(session))
         else:
             if away_task is not None and not away_task.done():
                 away_task.cancel()
