@@ -22,6 +22,7 @@ from livekit.agents import (
 from livekit.plugins import deepgram, openai, silero
 
 from friday.config import get_settings
+from friday.observability import CallRecorder
 from friday.knowledge.prompts import build_system_prompt, GREETING, TIME_WARNING, GOODBYE, STILL_THERE
 from friday.tools.email_tool import send_message_to_tanish, send_resume_to_user
 from friday.tools.github_tool import (
@@ -287,6 +288,12 @@ async def entrypoint(ctx: JobContext):
         room_options=room_io.RoomOptions(delete_room_on_close=True),
     )
     logger.info(f"Friday active for user: {user_id}")
+
+    # Observability — flight recorder per call (transcript/tools/metrics/usage)
+    recorder = CallRecorder(room_name=ctx.room.name, user_id=user_id)
+    recorder.attach(session)
+    session.on("close", lambda _ev: recorder.finish())
+    ctx.add_shutdown_callback(recorder.finish)
 
     # Hard cap on call duration — cancelled if the job ends early
     timer = asyncio.create_task(_enforce_call_limit(session))
