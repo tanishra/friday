@@ -31,6 +31,7 @@ from friday.tools.github_tool import (
     get_recent_activity as fetch_recent_activity,
 )
 from friday.tools.calendar_tool import create_meeting
+from friday.tools.guards import normalize_email, can_send_to, record_send
 
 logger   = logging.getLogger("friday.agent")
 settings = get_settings()
@@ -100,8 +101,15 @@ class FridayAgent(Agent):
         Send a visitor's message directly to Tanish's inbox via email.
         Ask for name, email, and message before calling this.
         """
+        sender_email = normalize_email(sender_email) or ""
+        if not sender_email:
+            return "That doesn't look like a valid email address — could you say it again?"
+        if not can_send_to(sender_email):
+            return "I've already sent a few emails to that address today. Please reach Tanish directly at tanishrajput9@gmail.com."
         await self.session.say("Sure thing, let me get that message sent to Tanish for you.", allow_interruptions=True)
         result = await send_message_to_tanish(sender_name, sender_email, message)
+        if result["success"]:
+            record_send(sender_email, "message")
         return result["message"]
 
     @function_tool()
@@ -113,8 +121,15 @@ class FridayAgent(Agent):
         """
         Send a PDF of Tanish's resume directly to the user's email address.
         """
+        receiver_email = normalize_email(receiver_email) or ""
+        if not receiver_email:
+            return "That doesn't look like a valid email address — could you say it again?"
+        if not can_send_to(receiver_email):
+            return "I've already sent a few emails to that address today. Please reach Tanish directly at tanishrajput9@gmail.com."
         await self.session.say(f"Of course, {receiver_name}. I'm sending Tanish's resume to {receiver_email} right now.", allow_interruptions=True)
         result = await send_resume_to_user(receiver_email, receiver_name)
+        if result["success"]:
+            record_send(receiver_email, "resume")
         return result["message"]
 
     @function_tool()
@@ -159,6 +174,11 @@ class FridayAgent(Agent):
         duration_minutes:  Annotated[int, "Meeting duration in minutes"] = 30,
     ) -> str:
         """Schedule a Google Meet / calendar meeting."""
+        requester_email = normalize_email(requester_email) or ""
+        if not requester_email:
+            return "That doesn't look like a valid email address — could you say it again?"
+        if not can_send_to(requester_email):
+            return "I've already sent a few invites to that address today. Please reach Tanish directly at tanishrajput9@gmail.com."
         await self.session.say("One moment while I check availability and book that for you.", allow_interruptions=True)
         result = await create_meeting(
             requester_name=requester_name,
@@ -168,6 +188,8 @@ class FridayAgent(Agent):
             preferred_time=preferred_time,
             duration_minutes=duration_minutes,
         )
+        if result["success"]:
+            record_send(requester_email, "meeting")
         return result["message"]
 
     @function_tool()
