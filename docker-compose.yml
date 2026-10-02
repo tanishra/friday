@@ -9,6 +9,7 @@ services:
       - "8080:8080"
     volumes:
       - ./friday/knowledge/resume.pdf:/app/friday/knowledge/resume.pdf
+      - ./logs:/app/logs
       # If you use Google Calendar, uncomment the lines below after generating token.json
       # - ./credentials.json:/app/credentials.json
       # - ./token.json:/app/token.json
