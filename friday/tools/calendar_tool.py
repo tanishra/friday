@@ -22,6 +22,7 @@ import pytz
 from dateutil import parser as date_parser
 
 from friday.config import get_settings
+from friday.tools.guards import retry_sync
 
 CREDS_FILE  = Path(__file__).parent.parent.parent / "credentials.json"
 TOKEN_FILE  = Path(__file__).parent.parent.parent / "token.json"
@@ -132,12 +133,14 @@ async def create_meeting(
             }
 
             created = await asyncio.to_thread(
-                lambda: service.events().insert(
-                    calendarId="primary",
-                    body=event,
-                    conferenceDataVersion=1,
-                    sendUpdates="all",
-                ).execute()
+                lambda: retry_sync(
+                    lambda: service.events().insert(
+                        calendarId="primary",
+                        body=event,
+                        conferenceDataVersion=1,
+                        sendUpdates="all",
+                    ).execute()
+                )
             )
 
             meet_link  = created.get("hangoutLink", "Link will be in the calendar invite")

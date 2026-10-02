@@ -12,6 +12,7 @@ from pathlib import Path
 import resend
 
 from friday.config import get_settings
+from friday.tools.guards import retry_sync
 
 RESUME_PATH = Path(__file__).parent.parent / "knowledge" / "resume.pdf"
 
@@ -23,7 +24,7 @@ def _send_email(params: dict):
     and all callers share one code path.
     """
     resend.api_key = get_settings().resend_api_key
-    return resend.Emails.send(params)
+    return retry_sync(lambda: resend.Emails.send(params))
 
 
 def _send_resume_email(receiver_email: str, receiver_name: str) -> dict:

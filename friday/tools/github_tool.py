@@ -11,6 +11,7 @@ import logging
 
 from github import Github
 from friday.config import get_settings
+from friday.tools.guards import retry_sync
 
 settings = get_settings()
 logger   = logging.getLogger("friday.tools.github")
@@ -25,14 +26,14 @@ def _get_client():
 # ── Sync implementations (run inside worker threads) ─────────────────────────
 def _get_all_repositories_sync() -> list[str]:
     g = _get_client()
-    user = g.get_user(settings.github_username)
+    user = retry_sync(lambda: g.get_user(settings.github_username))
     return [repo.name for repo in user.get_repos()]
 
 
 def _get_repo_details_sync(repo_name: str) -> str:
     g = _get_client()
     try:
-        repo = g.get_repo(f"{settings.github_username}/{repo_name}")
+        repo = retry_sync(lambda: g.get_repo(f"{settings.github_username}/{repo_name}"))
 
         details = [
             f"Repository: {repo.name}",
@@ -64,8 +65,8 @@ def _get_repo_details_sync(repo_name: str) -> str:
 def _get_recent_activity_sync(repo_name: str) -> str:
     g = _get_client()
     try:
-        repo = g.get_repo(f"{settings.github_username}/{repo_name}")
-        issues = repo.get_issues(state='open')
+        repo = retry_sync(lambda: g.get_repo(f"{settings.github_username}/{repo_name}"))
+        issues = retry_sync(lambda: repo.get_issues(state='open'))
 
         if issues.totalCount == 0:
             return f"There are no open issues or pull requests in {repo_name}."
@@ -83,7 +84,7 @@ def _get_recent_activity_sync(repo_name: str) -> str:
 def _get_github_summary_sync() -> str:
     g = _get_client()
     try:
-        user = g.get_user(settings.github_username)
+        user = retry_sync(lambda: g.get_user(settings.github_username))
         repos = user.get_repos(sort='updated', direction='desc')
 
         repo_names = [r.name for r in repos[:5]]

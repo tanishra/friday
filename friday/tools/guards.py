@@ -40,3 +40,29 @@ def record_send(recipient: str, kind: str) -> None:
     """Record a successful send and log the outbound recipient."""
     _sends.setdefault(recipient, []).append(time.time())
     logger.info(f"outbound send kind={kind} to={recipient}")
+
+
+# ── Input sanitization ────────────────────────────────────────────────────────
+CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+
+
+def sanitize_text(value: str, max_len: int) -> str:
+    """Strip control chars and hard-cap length for visitor-supplied strings."""
+    if not value:
+        return ""
+    return CONTROL_CHARS.sub("", str(value)).strip()[:max_len]
+
+
+# ── Retry helper for blocking external calls (runs inside worker threads) ────
+def retry_sync(fn, attempts: int = 2, delay: float = 0.5):
+    """Run a blocking fn with one retry + fixed backoff. Raises the last error."""
+    last = None
+    for i in range(attempts):
+        try:
+            return fn()
+        except Exception as e:
+            last = e
+            if i < attempts - 1:
+                logger.debug(f"retrying after error: {e}")
+                time.sleep(delay)
+    raise last

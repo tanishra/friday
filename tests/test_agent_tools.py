@@ -87,3 +87,31 @@ async def test_get_current_time_ist(friday_agent):
 
 async def _ok(d):
     return d
+
+
+async def test_navigate_ui_rejects_bad_section(friday_agent):
+    called = []
+    async def pub(payload):
+        called.append(payload)
+    friday_agent._room.local_participant.publish_data = pub
+    out = await call_tool(friday_agent.navigate_ui, "evil-section")
+    assert "can only show" in out.lower()
+    assert called == []
+
+
+async def test_send_email_empty_message_after_sanitize(friday_agent):
+    out = await call_tool(friday_agent.send_email, "A", "a@x.com", "\x00\x1f")
+    assert "what the message should say" in out
+
+
+async def test_send_email_sanitizes_name(friday_agent, monkeypatch):
+    captured = []
+    monkeypatch.setattr(agent_mod, "can_send_to", lambda e: True)
+    monkeypatch.setattr(agent_mod, "record_send", lambda e, k: None)
+    async def capture(n, e, m):
+        captured.append((n, m))
+        return {"success": True, "message": "ok"}
+    monkeypatch.setattr(agent_mod, "send_message_to_tanish", capture)
+    await call_tool(friday_agent.send_email, "Al\x00ice" + "x" * 200, "a@x.com", "hello")
+    name, msg = captured[0]
+    assert len(name) == 100 and "\x00" not in name

@@ -32,10 +32,12 @@ from friday.tools.github_tool import (
     get_recent_activity as fetch_recent_activity,
 )
 from friday.tools.calendar_tool import create_meeting
-from friday.tools.guards import normalize_email, can_send_to, record_send
+from friday.tools.guards import normalize_email, can_send_to, record_send, sanitize_text
 
 logger   = logging.getLogger("friday.agent")
 settings = get_settings()
+
+VALID_SECTIONS = {"home", "about", "experience", "projects", "education", "contact"}
 
 
 # ── Agent class ────────────────────────────────────────────────────────────────
@@ -77,11 +79,14 @@ class FridayAgent(Agent):
         Remotely control the website's UI to scroll to a specific section.
         Use this whenever you are talking about a specific part of Tanish's life or work.
         """
+        section = sanitize_text(section, 20).lower()
+        if section not in VALID_SECTIONS:
+            return "I can only show home, about, experience, projects, education, or contact."
         await self.session.say(f"Let me show you that on the page.", allow_interruptions=True)
-        
+
         payload = json.dumps({
             "type": "NAVIGATE",
-            "section": section.lower()
+            "section": section
         }).encode('utf-8')
         
         try:
@@ -102,9 +107,13 @@ class FridayAgent(Agent):
         Send a visitor's message directly to Tanish's inbox via email.
         Ask for name, email, and message before calling this.
         """
+        sender_name  = sanitize_text(sender_name, 100)
+        message      = sanitize_text(message, 2000)
         sender_email = normalize_email(sender_email) or ""
         if not sender_email:
             return "That doesn't look like a valid email address — could you say it again?"
+        if not message:
+            return "Could you tell me what the message should say?"
         if not can_send_to(sender_email):
             return "I've already sent a few emails to that address today. Please reach Tanish directly at tanishrajput9@gmail.com."
         await self.session.say("Sure thing, let me get that message sent to Tanish for you.", allow_interruptions=True)
@@ -122,6 +131,7 @@ class FridayAgent(Agent):
         """
         Send a PDF of Tanish's resume directly to the user's email address.
         """
+        receiver_name  = sanitize_text(receiver_name, 100)
         receiver_email = normalize_email(receiver_email) or ""
         if not receiver_email:
             return "That doesn't look like a valid email address — could you say it again?"
@@ -175,6 +185,10 @@ class FridayAgent(Agent):
         duration_minutes:  Annotated[int, "Meeting duration in minutes"] = 30,
     ) -> str:
         """Schedule a Google Meet / calendar meeting."""
+        requester_name  = sanitize_text(requester_name, 100)
+        topic           = sanitize_text(topic, 200)
+        preferred_date  = sanitize_text(preferred_date, 50)
+        preferred_time  = sanitize_text(preferred_time, 50)
         requester_email = normalize_email(requester_email) or ""
         if not requester_email:
             return "That doesn't look like a valid email address — could you say it again?"
