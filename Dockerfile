@@ -10,9 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy pinned+hashed lockfile and install dependencies
+# regen: uv pip compile requirements.txt --generate-hashes -o requirements.lock --python-version 3.11
+COPY requirements.lock .
+RUN pip install --no-cache-dir -r requirements.lock
 
 # Pre-download Silero VAD model to avoid downloading at runtime
 RUN python -c "from livekit.plugins import silero; silero.VAD.load()"

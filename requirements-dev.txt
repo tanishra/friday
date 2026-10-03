@@ -1,3 +1,7 @@
 # ── Test dependencies (not shipped in the production image) ──────────────────
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+
+# ── Lockfile regeneration (after editing requirements.txt) ───────────────────
+# uv pip compile requirements.txt --generate-hashes -o requirements.lock --python-version 3.11
+uv>=0.5.0

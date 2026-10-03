@@ -47,7 +47,8 @@ cd friday
 
 ### 2. Install Dependencies
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.lock    # pinned + hashed — recommended
+# or: pip install -r requirements.txt   # floating ranges (dev only)
 python -c "from livekit.plugins import silero; silero.VAD.load()"
 ```
 
