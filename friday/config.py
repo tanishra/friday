@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     friday_api_key: str                    # shared secret required on /token
     token_rate_limit: str = "10/hour"      # slowapi limit string
 
+    # ── Alerting (optional — disabled when empty) ──────────────────────────────
+    alert_webhook_url: str = ""            # Slack or Discord incoming webhook
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

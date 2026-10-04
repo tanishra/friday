@@ -5,9 +5,12 @@ JSON record per call to logs/calls/ — transcript, tool executions, pipeline
 latency metrics, token usage, and errors. Passive listeners only; never
 mutates session behavior.
 """
+import asyncio
 import json
 import logging
+import threading
 import time
+import urllib.request
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -21,6 +24,31 @@ LOG_DIR = Path("logs/calls")
 
 def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+# ── Error alerting (optional — no-op unless ALERT_WEBHOOK_URL is set) ─────────
+def _send_alert_sync(url: str, message: str, timeout: float = 5.0) -> None:
+    """POST alert to a Slack ({"text"}) or Discord ({"content"}) webhook."""
+    payload = {"content": message} if "discord" in url else {"text": message}
+    req = urllib.request.Request(
+        url, data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json"},
+    )
+    urllib.request.urlopen(req, timeout=timeout)
+
+
+def _fire_alert(url: str, message: str) -> None:
+    """Fire-and-forget — never blocks the event loop, never raises."""
+    def _safe():
+        try:
+            _send_alert_sync(url, message)
+        except Exception as e:
+            logger.warning(f"alert webhook failed: {e}")
+    try:
+        loop = asyncio.get_running_loop()
+        loop.run_in_executor(None, _safe)
+    except RuntimeError:
+        threading.Thread(target=_safe, daemon=True).start()
 
 
 class CallRecorder:
@@ -136,3 +164,20 @@ class CallRecorder:
             f"turns={len(self._rec['transcript'])} tools={len(self._rec['tools'])} "
             f"errors={len(self._rec['errors'])} llm_ttft_avg={llm.get('ttft_avg', '-')}s"
         )
+
+        # alert on calls that ended with errors — no-op if webhook unset
+        try:
+            from friday.config import get_settings
+            url = get_settings().alert_webhook_url
+            if url and self._rec["errors"]:
+                err_txt = "; ".join(
+                    str(e["error"])[:120] for e in self._rec["errors"][:3]
+                )
+                _fire_alert(
+                    url,
+                    f"Friday alert: room={self._rec['room']} "
+                    f"user={self._rec['user_id']} dur={duration:.0f}s "
+                    f"errors={len(self._rec['errors'])} — {err_txt}",
+                )
+        except Exception as e:
+            logger.warning(f"alert dispatch failed: {e}")

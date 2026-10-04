@@ -49,3 +49,64 @@ def test_garbage_events_never_raise(tmp_path, monkeypatch):
     r._on_error(object())
     r.finish()
     assert len(list(tmp_path.glob("*.json"))) == 1
+
+
+# ── Error alerting ────────────────────────────────────────────────────────────
+def test_alert_fired_on_errors(tmp_path, monkeypatch):
+    fired = []
+    monkeypatch.setattr(obs, "_fire_alert", lambda url, msg: fired.append((url, msg)))
+    monkeypatch.setenv("ALERT_WEBHOOK_URL", "https://hooks.slack.com/x")
+    from friday.config import get_settings
+    get_settings.cache_clear()
+
+    r = _rec(tmp_path, monkeypatch)
+    r._on_error(SimpleNamespace(error=Exception("boom")))
+    r.finish()
+
+    assert len(fired) == 1
+    assert "test-room" in fired[0][1] and "errors=1" in fired[0][1]
+    get_settings.cache_clear()
+
+
+def test_alert_not_fired_on_clean_call(tmp_path, monkeypatch):
+    fired = []
+    monkeypatch.setattr(obs, "_fire_alert", lambda url, msg: fired.append((url, msg)))
+    monkeypatch.setenv("ALERT_WEBHOOK_URL", "https://hooks.slack.com/x")
+    from friday.config import get_settings
+    get_settings.cache_clear()
+
+    r = _rec(tmp_path, monkeypatch)
+    r.finish()
+
+    assert fired == []
+    get_settings.cache_clear()
+
+
+def test_alert_disabled_without_url(tmp_path, monkeypatch):
+    fired = []
+    monkeypatch.setattr(obs, "_fire_alert", lambda url, msg: fired.append(msg))
+    monkeypatch.delenv("ALERT_WEBHOOK_URL", raising=False)
+    from friday.config import get_settings
+    get_settings.cache_clear()
+
+    r = _rec(tmp_path, monkeypatch)
+    r._on_error(SimpleNamespace(error=Exception("boom")))
+    r.finish()
+
+    assert fired == []
+
+
+def test_alert_failure_never_breaks_finish(tmp_path, monkeypatch):
+    def boom(url, msg):
+        raise RuntimeError("webhook down")
+    monkeypatch.setattr(obs, "_fire_alert", boom)
+    monkeypatch.setenv("ALERT_WEBHOOK_URL", "https://hooks.slack.com/x")
+    from friday.config import get_settings
+    get_settings.cache_clear()
+
+    r = _rec(tmp_path, monkeypatch)
+    r._on_error(SimpleNamespace(error=Exception("x")))
+    r.finish()                                   # must not raise
+
+    assert len(list(tmp_path.glob("*.json"))) == 1
+    get_settings.cache_clear()
