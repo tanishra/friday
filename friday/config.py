@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     # ── Alerting (optional — disabled when empty) ──────────────────────────────
     alert_webhook_url: str = ""            # Slack or Discord incoming webhook
 
+    # ── Observability ──────────────────────────────────────────────────────────
+    log_retention_days: int = 30           # call records older than this are swept (0 = keep)
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

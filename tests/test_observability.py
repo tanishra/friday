@@ -1,5 +1,7 @@
 """CallRecorder: JSON record written, idempotent, crash-safe."""
 import json
+import os
+import time
 from types import SimpleNamespace
 
 import friday.observability as obs
@@ -110,3 +112,37 @@ def test_alert_failure_never_breaks_finish(tmp_path, monkeypatch):
 
     assert len(list(tmp_path.glob("*.json"))) == 1
     get_settings.cache_clear()
+
+
+# ── Log retention sweep ───────────────────────────────────────────────────────
+def _make_record(path, age_days):
+    f = path / f"call-{age_days}d.json"
+    f.write_text("{}")
+    old = time.time() - age_days * 86400
+    os.utime(f, (old, old))
+    return f
+
+
+def test_sweep_deletes_old_keeps_fresh(tmp_path, monkeypatch):
+    monkeypatch.setattr(obs, "LOG_DIR", tmp_path)
+    old_f = _make_record(tmp_path, 40)
+    new_f = _make_record(tmp_path, 2)
+
+    obs._sweep_old_records(30)
+
+    assert not old_f.exists()
+    assert new_f.exists()
+
+
+def test_sweep_disabled_at_zero(tmp_path, monkeypatch):
+    monkeypatch.setattr(obs, "LOG_DIR", tmp_path)
+    old_f = _make_record(tmp_path, 400)
+
+    obs._sweep_old_records(0)
+
+    assert old_f.exists()
+
+
+def test_sweep_missing_dir_no_crash(tmp_path, monkeypatch):
+    monkeypatch.setattr(obs, "LOG_DIR", tmp_path / "nonexistent")
+    obs._sweep_old_records(30)          # must not raise

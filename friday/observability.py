@@ -51,10 +51,36 @@ def _fire_alert(url: str, message: str) -> None:
         threading.Thread(target=_safe, daemon=True).start()
 
 
+# ── Log retention — sweep records older than LOG_RETENTION_DAYS ───────────────
+def _sweep_old_records(days: int) -> None:
+    """Delete call records older than `days` (0 = keep forever). Never raises."""
+    if days <= 0:
+        return
+    try:
+        cutoff = time.time() - days * 86400
+        removed = 0
+        for f in LOG_DIR.glob("*.json"):
+            try:
+                if f.stat().st_mtime < cutoff:
+                    f.unlink()
+                    removed += 1
+            except OSError:
+                pass
+        if removed:
+            logger.info(f"log sweep: removed {removed} call record(s) older than {days}d")
+    except Exception as e:
+        logger.warning(f"log sweep failed: {e}")
+
+
 class CallRecorder:
     """Records one call's transcript, tools, metrics, usage, and errors."""
 
     def __init__(self, room_name: str, user_id: str):
+        try:
+            from friday.config import get_settings
+            _sweep_old_records(get_settings().log_retention_days)
+        except Exception:
+            pass
         self._t0 = time.monotonic()
         self._finished = False
         self._usage = ModelUsageCollector()
