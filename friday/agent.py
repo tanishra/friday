@@ -285,7 +285,7 @@ async def entrypoint(ctx: JobContext):
     session = AgentSession(
         stt=deepgram.STT(
             api_key=settings.deepgram_api_key,
-            model="nova-2",
+            model="nova-3",
             language="en-US",
             interim_results=True,
             smart_format=True,
@@ -297,7 +297,7 @@ async def entrypoint(ctx: JobContext):
         ),
         tts=deepgram.TTS(
             api_key=settings.deepgram_api_key,
-            model="aura-stella-en",  # kind and professional female voice
+            model="aura-2-thalia-en",  # Aura-2 — clear, confident female voice
         ),
         vad=silero.VAD.load(),             # local VAD — free & fast
         # ── Turn detection tuning ──

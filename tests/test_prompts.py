@@ -27,3 +27,11 @@ def test_spoken_strings_exist():
 def test_no_markdown_instructions_in_prompt():
     p = build_system_prompt()
     assert "NO MARKDOWN" in p
+
+
+def test_models_current():
+    """Guard: STT/TTS model strings stay on current generation."""
+    from pathlib import Path
+    src = Path("friday/agent.py").read_text()
+    assert '"nova-3"' in src and '"nova-2"' not in src
+    assert "aura-2-" in src and "aura-stella" not in src
