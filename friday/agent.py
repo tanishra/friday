@@ -19,7 +19,7 @@ from livekit.agents import (
     function_tool,
     room_io,
 )
-from livekit.plugins import deepgram, openai, silero
+from livekit.plugins import deepgram, openai, silero, noise_cancellation
 
 from friday.config import get_settings
 from friday.observability import CallRecorder
@@ -313,7 +313,12 @@ async def entrypoint(ctx: JobContext):
     await session.start(
         agent=FridayAgent(user_id=user_id, room=ctx.room),
         room=ctx.room,
-        room_options=room_io.RoomOptions(delete_room_on_close=True),
+        room_options=room_io.RoomOptions(
+            delete_room_on_close=True,
+            audio_input=room_io.AudioInputOptions(
+                noise_cancellation=noise_cancellation.BVC(),
+            ),
+        ),
     )
     logger.info(f"Friday active for user: {user_id}")
 

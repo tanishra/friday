@@ -1,5 +1,6 @@
 # ── Core LiveKit Agents framework ─────────────────────────────────────────────
 livekit-agents[deepgram,openai,elevenlabs,silero,anthropic]>=0.12.0
+livekit-plugins-noise-cancellation>=0.3.2
 
 # ── LiveKit Server SDK (token generation) ─────────────────────────────────────
 livekit-api>=0.7.0

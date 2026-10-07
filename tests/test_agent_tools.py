@@ -104,6 +104,21 @@ async def test_send_email_empty_message_after_sanitize(friday_agent):
     assert "what the message should say" in out
 
 
+def test_room_options_noise_cancellation():
+    """BVC wiring constructs cleanly — guards the noise-cancel config."""
+    from livekit.agents import room_io
+    from livekit.plugins import noise_cancellation
+
+    opts = room_io.RoomOptions(
+        delete_room_on_close=True,
+        audio_input=room_io.AudioInputOptions(
+            noise_cancellation=noise_cancellation.BVC(),
+        ),
+    )
+    assert opts.delete_room_on_close is True
+    assert opts.audio_input.noise_cancellation is not None
+
+
 async def test_send_email_sanitizes_name(friday_agent, monkeypatch):
     captured = []
     monkeypatch.setattr(agent_mod, "can_send_to", lambda e: True)
