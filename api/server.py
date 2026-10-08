@@ -62,8 +62,10 @@ app.add_middleware(
 
 # ── Request / Response models ──────────────────────────────────────────────────
 class TokenRequest(BaseModel):
-    identity: str | None = None     # optional visitor identity
-    room_name: str | None = None    # optional custom room name
+    # fields accepted for backward compat but ignored — room/identity are
+    # always generated server-side so visitors can't collide or lurk.
+    identity: str | None = None
+    room_name: str | None = None
 
 
 class TokenResponse(BaseModel):
@@ -83,9 +85,10 @@ async def health():
 @limiter.limit(lambda: settings.token_rate_limit)
 async def get_token(req: TokenRequest, request: Request):
     try:
-        # Generate unique identifiers
-        room_name = req.room_name or f"friday-{secrets.token_hex(6)}"
-        identity  = req.identity or f"visitor-{secrets.token_hex(4)}"
+        # Always server-generate — client-supplied room/identity would allow
+        # room collisions (two visitors sharing a room) or parked attackers.
+        room_name = f"friday-{secrets.token_hex(6)}"
+        identity  = f"visitor-{secrets.token_hex(4)}"
 
         # 1. Force TTL to be a clean integer
         # This prevents any weird types from your settings file causing math errors

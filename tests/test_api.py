@@ -37,6 +37,27 @@ def test_token_valid_key_200():
     assert body["expires_at"]
 
 
+def test_token_ignores_client_room_name():
+    r = _client().post(
+        "/token",
+        json={"room_name": "shared-room", "identity": "bob"},
+        headers={"X-Friday-Key": KEY},
+    )
+    assert r.status_code == 200
+    name = r.json()["room_name"]
+    assert name != "shared-room"
+    assert name.startswith("friday-")
+
+
+def test_token_rooms_unique_per_call():
+    client = _client()
+    names = {
+        client.post("/token", json={}, headers={"X-Friday-Key": KEY}).json()["room_name"]
+        for _ in range(3)
+    }
+    assert len(names) == 3
+
+
 def test_token_rate_limit(monkeypatch):
     """Reload the app with a tiny limit, expect 429 past it."""
     from friday.config import get_settings
