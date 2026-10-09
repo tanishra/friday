@@ -111,9 +111,9 @@ async def get_token(req: TokenRequest, request: Request):
         token.with_grants(VideoGrants(
             room_join=True,
             room=room_name,
-            can_publish=True,
-            can_subscribe=True,
-            can_publish_data=True,
+            can_publish=True,        # visitor needs mic audio
+            can_subscribe=True,      # hear Friday
+            can_publish_data=False,  # agent-only publishes NAVIGATE data
         ))
 
         # Explicitly set TTL as an integer

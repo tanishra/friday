@@ -58,6 +58,15 @@ def test_token_rooms_unique_per_call():
     assert len(names) == 3
 
 
+def test_token_cannot_publish_data():
+    import base64, json
+    r = _client().post("/token", json={}, headers={"X-Friday-Key": KEY})
+    payload = json.loads(base64.b64decode(r.json()["token"].split(".")[1] + "=="))
+    assert payload["video"]["canPublishData"] is False
+    assert payload["video"]["canPublish"] is True
+    assert payload["video"]["canSubscribe"] is True
+
+
 def test_token_rate_limit(monkeypatch):
     """Reload the app with a tiny limit, expect 429 past it."""
     from friday.config import get_settings
