@@ -1,9 +1,9 @@
 """
 Friday — Core Agent
 Built on LiveKit Agents framework with:
-  STT  → Deepgram
-  LLM  → OpenAI GPT-4o
-  TTS  → Deepgram
+  STT  → Deepgram nova-3
+  LLM  → OpenAI GPT-4o-mini
+  TTS  → Deepgram aura-2
   VAD  → Silero (local, free)
 """
 import asyncio
@@ -309,6 +309,12 @@ async def entrypoint(ctx: JobContext):
         user_away_timeout=60.0,            # mark visitor 'away' after 60s silence
     )
 
+    # Observability — attach BEFORE start so greeting + early events are captured
+    recorder = CallRecorder(room_name=ctx.room.name, user_id=user_id)
+    recorder.attach(session)
+    session.on("close", lambda _ev: recorder.finish())
+    ctx.add_shutdown_callback(recorder.finish)
+
     # Pass ctx.room to FridayAgent so tools can publish data correctly
     await session.start(
         agent=FridayAgent(user_id=user_id, room=ctx.room),
@@ -321,12 +327,6 @@ async def entrypoint(ctx: JobContext):
         ),
     )
     logger.info(f"Friday active for user: {user_id}")
-
-    # Observability — flight recorder per call (transcript/tools/metrics/usage)
-    recorder = CallRecorder(room_name=ctx.room.name, user_id=user_id)
-    recorder.attach(session)
-    session.on("close", lambda _ev: recorder.finish())
-    ctx.add_shutdown_callback(recorder.finish)
 
     # Hard cap on call duration — cancelled if the job ends early
     timer = asyncio.create_task(_enforce_call_limit(session))
