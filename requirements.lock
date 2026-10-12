@@ -1027,9 +1027,9 @@ livekit==1.1.20 \
     # via
     #   livekit-agents
     #   livekit-plugins-noise-cancellation
-livekit-agents==1.8.4 \
-    --hash=sha256:081cd10e80c6691372598d29b79b64cbede504e3c7c45b2bea78589ccbe4e48c \
-    --hash=sha256:7687725b7db313bcc8461fe88b0ac960845cb1b56629c5d3c6cca3d6edcce108
+livekit-agents==1.8.6 \
+    --hash=sha256:26a47cc0f3bbfaf50c6472e850b5334df1e1ca42a6d935e31fda8c06ff247d0d \
+    --hash=sha256:9adbed837314efeb39850d1bc3fb345fa480eec0efe32971bffc6f6bff1c197a
     # via
     #   -r requirements.txt
     #   livekit-plugins-anthropic
@@ -1107,17 +1107,17 @@ livekit-local-inference==0.2.7 \
     --hash=sha256:fa4cb2d495c80be6121642dba4def3a88b22a68d52c1b0affccd66c563de6622 \
     --hash=sha256:fedd281fd23b215fe36ce248445a3b0a4f0e1118c6ff7d0e0ad6a882281ecc1e
     # via livekit-agents
-livekit-plugins-anthropic==1.8.4 \
-    --hash=sha256:82a201e01d2555f560ea1f9ad83d1a18b7b0335a180b78be9fb39d2358f694af \
-    --hash=sha256:8cf92d55857f64cb008869315c5430d3a18daada88448386f404bbd788277909
+livekit-plugins-anthropic==1.8.6 \
+    --hash=sha256:7c147f63831ac7bffd2c4ed384090905a505dae38310766b40fa90d8847791a1 \
+    --hash=sha256:adedcb652bdfafebdc190870c0439239427be1999912265ba275211ade978a65
     # via livekit-agents
-livekit-plugins-deepgram==1.8.4 \
-    --hash=sha256:6c033ced9c36c16587acb2d7b313cd4a5a8bdf0bdb05b79a3d8dd999e84ac116 \
-    --hash=sha256:df4af9cd54c04cee2a21077f5a62589dc4a3c419f71bf1904c3cfb164b728d12
+livekit-plugins-deepgram==1.8.6 \
+    --hash=sha256:061e2b3a9b3d4ed1784739252e88294e2ea4ea80078f61aa3099a10873bd5a8e \
+    --hash=sha256:54a1a37b8e2bd55c08202d13f282fb7575135c023ef82e9153f3f8a834c6c7d8
     # via livekit-agents
-livekit-plugins-elevenlabs==1.8.4 \
-    --hash=sha256:472e8479c81e59299d2502d0a900960454bf030d6ecea0cd45607dc1b12192da \
-    --hash=sha256:a3b81896985084c7649dc64f4a2f2791167695c3a28c78ec18a72af98998fb4b
+livekit-plugins-elevenlabs==1.8.6 \
+    --hash=sha256:95ff2198248a76d343be7305ecddb9c88e43a831978a5c1579b5fb7843e51fd4 \
+    --hash=sha256:d3c54b792e582bda5855389e09eff8c408a6a487f9a7c461f0b0547aa12de6b0
     # via livekit-agents
 livekit-plugins-noise-cancellation==0.3.2 \
     --hash=sha256:104c1ae210186f278d04de6f6f19ae2be2d79bc9440e7899ab918bd771f908cb \
@@ -1126,13 +1126,13 @@ livekit-plugins-noise-cancellation==0.3.2 \
     --hash=sha256:632416212279531f30a012486627f4371ef474eca87e9610fbca6787d8599a3d \
     --hash=sha256:be077ba5c927189e31a6b33fd58f9d799df88c7a130df997af91f9d7aa63d5c8
     # via -r requirements.txt
-livekit-plugins-openai==1.8.4 \
-    --hash=sha256:0aa2d24990f5c3d5a0e0442a586330b9dbdabfdba2e5a581e5c01604ba8c0baf \
-    --hash=sha256:4d59aa2dabe808b7045aae435bcd1865e7174abfe9b1fe2d48534724a7db4e65
+livekit-plugins-openai==1.8.6 \
+    --hash=sha256:7990ed8c57ee9bcc3d6695a2546a21de70d1c434084454a633cea19a20014afc \
+    --hash=sha256:a103d8108adf3f743a312fd50d7686588e772bcf141c7b02b0b4fada48cb85bf
     # via livekit-agents
-livekit-plugins-silero==1.8.4 \
-    --hash=sha256:3b07e4243d99290cdcf5f71aa00ff7b8c026823a3f19a764074da90732509480 \
-    --hash=sha256:9dd0c6d3727e12ef8d01b25a5f097137ad5be0380be8d42d7e5dcc88f2f85eae
+livekit-plugins-silero==1.8.6 \
+    --hash=sha256:26de4c3ecf29e417a8f0329d640c71294f1edc1a498f263d161ea322d34a0df8 \
+    --hash=sha256:4f49f256e23ed5188784e6be52b8b9bced8e03dad3b6a4c87fe7898975f646be
     # via livekit-agents
 livekit-protocol==1.1.27 \
     --hash=sha256:740a4c6e438da763d204f2a6b0fc8f7f33ca96e27b17ce9abc6557dbb0a28dbd \

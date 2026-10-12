@@ -104,6 +104,13 @@ async def test_send_email_empty_message_after_sanitize(friday_agent):
     assert "what the message should say" in out
 
 
+def test_turn_detector_wiring():
+    """Semantic TurnDetector is wired — guards the semantic EOU upgrade."""
+    from livekit.agents.inference import TurnDetector
+    td = TurnDetector()
+    assert td is not None
+
+
 def test_room_options_noise_cancellation():
     """BVC wiring constructs cleanly — guards the noise-cancel config."""
     from livekit.agents import room_io

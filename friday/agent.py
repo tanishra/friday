@@ -20,6 +20,7 @@ from livekit.agents import (
     room_io,
 )
 from livekit.plugins import deepgram, openai, silero, noise_cancellation
+from livekit.agents.inference import TurnDetector
 
 from friday.config import get_settings
 from friday.observability import CallRecorder
@@ -300,7 +301,9 @@ async def entrypoint(ctx: JobContext):
             model="aura-2-thalia-en",  # Aura-2 — clear, confident female voice
         ),
         vad=silero.VAD.load(),             # local VAD — free & fast
-        # ── Turn detection tuning ──
+        # ── Turn detection: semantic model via LiveKit inference
+        #    (cloud + local fallback) — bounds below still apply ──
+        turn_detection=TurnDetector(),
         min_endpointing_delay=0.8,         # wait out mid-thought pauses
         max_endpointing_delay=6.0,
         min_interruption_duration=0.5,     # ignore coughs/clicks
