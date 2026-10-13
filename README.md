@@ -27,10 +27,11 @@ Hardened for production: authenticated token minting with rate limiting, hard ca
 
 - **Voice pipeline:** Silero VAD → Deepgram nova-3 STT → GPT-4o-mini → Deepgram aura-2 TTS
 - **Tools:** UI navigation (data channel), email, resume delivery, GitHub queries, Google Meet scheduling
-- **Turn handling:** tuned endpointing, silent-visitor "still there?" nudge, auto goodbyes, 120s hard call cap
+- **Turn handling:** semantic turn detection (LiveKit `TurnDetector`) + tuned endpointing, silent-visitor "still there?" nudge, auto goodbyes, 120s hard call cap
+- **Audio quality:** BVC noise cancellation on visitor audio
 - **Observability:** per-call JSON flight recorder in `logs/calls/` + optional Slack/Discord error alerts
 - **Abuse protection:** `X-Friday-Key` auth, per-IP rate limits, email validation + per-recipient caps
-- **Engineering:** pinned+hashed dependency lockfile, 64-test suite, GitHub Actions CI
+- **Engineering:** pinned+hashed dependency lockfile, 69-test suite, GitHub Actions CI
 
 ## Architecture
 ```mermaid
@@ -105,7 +106,7 @@ Token API on `:8080` (`/health`), worker health on `:8081`.
 ### 5. Run Tests
 ```bash
 pip install -r requirements-dev.txt
-pytest -q          # 64 tests — external APIs mocked, no creds needed
+pytest -q          # 69 tests — external APIs mocked, no creds needed
 ```
 
 ## Frontend Integration
